@@ -3433,14 +3433,15 @@ class WebhookEventTrigger(models.Model):
         obj = cls.objects.create(headers=headers, body=body, remote_ip=ip)
 
         try:
-            obj.valid = obj.validate()
-            if obj.valid:
-                if djstripe_settings.WEBHOOK_EVENT_CALLBACK:
-                    # If WEBHOOK_EVENT_CALLBACK, pass it for processing
-                    djstripe_settings.WEBHOOK_EVENT_CALLBACK(obj)
-                else:
-                    # Process the item (do not save it, it'll get saved below)
-                    obj.process(save=False)
+            with transaction.atomic():
+                obj.valid = obj.validate()
+                if obj.valid:
+                    if djstripe_settings.WEBHOOK_EVENT_CALLBACK:
+                        # If WEBHOOK_EVENT_CALLBACK, pass it for processing
+                        djstripe_settings.WEBHOOK_EVENT_CALLBACK(obj)
+                    else:
+                        # Process the item (do not save it, it'll get saved below)
+                        obj.process(save=False)
         except Exception as e:
             max_length = WebhookEventTrigger._meta.get_field("exception").max_length
             obj.exception = text_type(e)[:max_length]
