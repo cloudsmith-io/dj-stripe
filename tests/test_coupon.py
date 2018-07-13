@@ -8,6 +8,8 @@ from six import text_type
 
 from djstripe.models import Coupon
 
+from six import text_type
+
 from . import FAKE_COUPON
 
 
